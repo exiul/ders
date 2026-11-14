@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ders Sayacı</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100vh;display:flex;flex-direction:column;background-size:cover;background-position:center;background-attachment:fixed}
+.top{display:flex;flex:1;min-height:60vh}
+.side{width:230px;background:rgba(0,0,0,.55);padding:16px;display:flex;flex-direction:column;gap:10px}
+.side h2{font-size:13px;color:#999;letter-spacing:1px}
+#liste{display:flex;flex-direction:column;gap:10px}
+.ders{padding:14px;border-radius:12px;cursor:pointer;border:2px solid transparent;font-weight:600;color:#fff;transition:.2s;opacity:.75}
+.ders:hover{opacity:1}
+.ders.aktif{opacity:1;border-color:#fff}
+.ders small{display:block;font-weight:400;margin-top:4px;opacity:.9}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
+#secili{font-size:22px;font-weight:600}
+#zaman{font-size:80px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+button{padding:12px 22px;border:none;border-radius:10px;font-size:16px;cursor:pointer;color:#fff;background:rgba(255,255,255,.15)}
+button:hover{background:rgba(255,255,255,.28)}
+.alt{background:rgba(0,0,0,.6);padding:20px}
+.alt h2{font-size:16px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12);font-size:14px}
+.toplam td{font-weight:700}
+#tam{display:none;position:fixed;inset:0;background:#000;z-index:10;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background-size:cover;background-position:center}
+#tam .buyuk{font-size:min(22vw,200px);font-weight:200;font-variant-numeric:tabular-nums;color:#f4f4f4;text-shadow:0 2px 20px rgba(0,0,0,.8)}
+#tam .ad{font-size:24px;margin-bottom:20px;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+#tam .ipucu{position:absolute;bottom:20px;color:#888;font-size:13px}
+@media(max-width:700px){.top{flex-direction:column}.side{width:100%}#liste{flex-direction:row;flex-wrap:wrap}#zaman{font-size:56px}}
+</style>
+</head>
+<body>
+<div class="top">
+ <div class="side">
+  <h2>DERSLER</h2>
+  <div id="liste"></div>
+  <button onclick="document.getElementById('dosya').click()">Arka Plan Yükle</button>
+  <button onclick="arkaSil()">Siyaha Dön</button>
+  <input type="file" id="dosya" accept="image/*" style="display:none">
+ </div>
+ <div class="main">
+  <div id="secili">Bir ders seç</div>
+  <div id="zaman">00:00:00</div>
+  <div class="btns">
+   <button onclick="baslat()">Başlat</button>
+   <button onclick="duraklat()">Duraklat</button>
+   <button onclick="bitir()">Bitir ve Kaydet</button>
+   <button onclick="tamEkran()">Tam Ekran</button>
+  </div>
+ </div>
+</div>
+<div class="alt">
+ <h2>Günlük ve Haftalık Durum</h2>
+ <table>
+  <thead><tr><th>Ders</th><th>Bugün</th><th>Bu Hafta</th><th>Toplam</th></tr></thead>
+  <tbody id="tablo"></tbody>
+ </table>
+</div>
+<div id="tam" onclick="tamKapat()">
+ <div class="ad" id="tamAd"></div>
+ <div class="buyuk" id="tamZaman">00:00:00</div>
+ <div class="ipucu">Kapatmak için ekrana dokun</div>
+</div>
+<script>
+const DERSLER={Matematik:'#d93a3a',Fizik:'#2e9e5a',Kimya:'#d4b21f',Biyoloji:'#8a4fd1'};
+const KEY='dersSayacVeri',BG='dersSayacArka';
+let veri=JSON.parse(localStorage.getItem(KEY)||'{"kayitlar":[]}');
+let secili=null,calisiyor=false,baslangic=0,biriken=0,tick=null;
+
+function kaydet(){localStorage.setItem(KEY,JSON.stringify(veri))}
+function yerelGun(d){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
+function haftaBasi(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return yerelGun(d)}
+function sure(sn){const s=Math.floor(sn);return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function kisa(sn){const m=Math.floor(sn/60);return Math.floor(m/60)+' sa '+(m%60)+' dk'}
+function gecen(){return biriken+(calisiyor?(Date.now()-baslangic)/1000:0)}
+function topla(ders,filtre){return veri.kayitlar.filter(k=>k.ders===ders&&filtre(k)).reduce((a,k)=>a+k.sn,0)}
+
+function arkaUygula(){
+ const img=localStorage.getItem(BG);
+ const v=img?'url('+img+')':'none';
+ document.body.style.backgroundImage=v;
+ document.getElementById('tam').style.backgroundImage=v;
+}
+document.getElementById('dosya').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const img=new Image(),url=URL.createObjectURL(f);
+ img.onload=()=>{
+  const c=document.createElement('canvas');
+  const o=Math.min(1,1600/Math.max(img.width,img.height));
+  c.width=img.width*o;c.height=img.height*o;
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  try{localStorage.setItem(BG,c.toDataURL('image/jpeg',.8))}catch(x){alert('Fotoğraf çok büyük, daha küçük bir tane dene.')}
+  arkaUygula();URL.revokeObjectURL(url);
+ };
+ img.src=url;
+};
+function arkaSil(){localStorage.removeItem(BG);arkaUygula()}
+
+function listeCiz(){
+ const el=document.getElementById('liste');el.innerHTML='';
+ const bugun=yerelGun(new Date());
+ Object.keys(DERSLER).forEach(d=>{
+  const div=document.createElement('div');
+  div.className='ders'+(secili===d?' aktif':'');
+  div.style.background=DERSLER[d];
+  div.innerHTML=d+'<small>Bugün: '+kisa(topla(d,k=>k.gun===bugun))+'</small>';
+  div.onclick=()=>sec(d);
+  el.appendChild(div);
+ });
+}
+function sec(d){
+ if(calisiyor||biriken>0){alert('Önce şu anki süreyi bitirip kaydet.');return}
+ secili=d;
+ document.getElementById('secili').textContent=d;
+ document.getElementById('tamAd').textContent=d;
+ document.getElementById('tamAd').style.color=DERSLER[d];
+ listeCiz();
+}
+function baslat(){
+ if(!secili){alert('Önce soldan bir ders seç.');return}
+ if(calisiyor)return;
+ calisiyor=true;baslangic=Date.now();tick=setInterval(guncelle,250);
+}
+function duraklat(){
+ if(!calisiyor)return;
+ biriken+=(Date.now()-baslangic)/1000;
+ calisiyor=false;clearInterval(tick);guncelle();
+}
+function bitir(){
+ if(!secili)return;
+ duraklat();
+ if(biriken>=1){veri.kayitlar.push({ders:secili,gun:yerelGun(new Date()),sn:Math.floor(biriken)});kaydet()}
+ biriken=0;guncelle();listeCiz();tabloCiz();
+}
+function guncelle(){
+ const t=sure(gecen());
+ document.getElementById('zaman').textContent=t;
+ document.getElementById('tamZaman').textContent=t;
+}
+function tabloCiz(){
+ const tb=document.getElementById('tablo');tb.innerHTML='';
+ const bugun=yerelGun(new Date()),hb=haftaBasi();
+ let tb1=0,tb2=0,tb3=0;
+ Object.keys(DERSLER).forEach(d=>{
+  const a=topla(d,k=>k.gun===bugun),b=topla(d,k=>k.gun>=hb),c=topla(d,()=>true);
+  tb1+=a;tb2+=b;tb3+=c;
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td style="color:'+DERSLER[d]+';font-weight:600">'+d+'</td><td>'+kisa(a)+'</td><td>'+kisa(b)+'</td><td>'+kisa(c)+'</td>';
+  tb.appendChild(tr);
+ });
+ const tr=document.createElement('tr');tr.className='toplam';
+ tr.innerHTML='<td>TOPLAM</td><td>'+kisa(tb1)+'</td><td>'+kisa(tb2)+'</td><td>'+kisa(tb3)+'</td>';
+ tb.appendChild(tr);
+}
+function tamEkran(){
+ if(!secili){alert('Önce soldan bir ders seç.');return}
+ document.getElementById('tam').style.display='flex';
+ if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
+}
+function tamKapat(){
+ document.getElementById('tam').style.display='none';
+ if(document.fullscreenElement)document.exitFullscreen();
+}
+arkaUygula();listeCiz();tabloCiz();guncelle();
+</script>
+</body>
+</html>
