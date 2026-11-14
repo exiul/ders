@@ -24,12 +24,12 @@
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100vh;display:flex;flex-direction:column;background-size:cover;background-position:center;background-attachment:fixed}
+body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100vh;display:flex;flex-direction:column;background-size:cover;background-position:center center;background-repeat:no-repeat;background-attachment:fixed}
 .top{display:flex;flex:1;min-height:60vh}
-.side{width:230px;background:rgba(28,28,30,.85);padding:16px;display:flex;flex-direction:column;gap:10px}
+.side{width:230px;background:rgba(20,20,22,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);padding:16px;display:flex;flex-direction:column;gap:10px}
 .side h2{font-size:13px;color:#999;letter-spacing:1px}
 #liste{display:flex;flex-direction:column;gap:10px}
-.ders{padding:14px;border-radius:8px;cursor:pointer;border:2px solid transparent;font-weight:600;background:#050505;transition:.2s}
+.ders{padding:14px;border-radius:8px;cursor:pointer;border:2px solid transparent;font-weight:600;background:rgba(0,0,0,.6);transition:.2s}
 .ders:hover{background:#111}
 .ders.aktif{border-color:#555}
 .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
@@ -38,11 +38,11 @@ body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100v
 .btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 button{padding:12px 22px;border:none;border-radius:10px;font-size:16px;cursor:pointer;color:#fff;background:rgba(255,255,255,.15)}
 button:hover{background:rgba(255,255,255,.28)}
-button.sek{background:#050505;border:2px solid #333}
+button.sek{background:rgba(0,0,0,.6);border:2px solid #333}
 button.sek.aktif{border-color:#aaa}
-.alt{background:rgba(28,28,30,.85);padding:20px}
+.alt{background:rgba(20,20,22,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);padding:20px}
 .sekmeler{display:flex;gap:10px;margin-bottom:14px}
-.satir{display:flex;justify-content:space-between;padding:12px 14px;margin-bottom:8px;background:#050505;border-radius:8px;font-weight:600}
+.satir{display:flex;justify-content:space-between;padding:12px 14px;margin-bottom:8px;background:rgba(0,0,0,.6);border-radius:8px;font-weight:600}
 .satir.toplam{color:#fff;border:1px solid #333}
 #tam{display:none;position:fixed;inset:0;background:#000;z-index:10;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background-size:cover;background-position:center}
 #tam .buyuk{font-size:min(22vw,200px);font-weight:200;font-variant-numeric:tabular-nums;color:#f4f4f4;text-shadow:0 2px 20px rgba(0,0,0,.8)}
@@ -108,10 +108,16 @@ document.getElementById('dosya').onchange=e=>{
  const img=new Image(),url=URL.createObjectURL(f);
  img.onload=()=>{
   const c=document.createElement('canvas');
-  const o=Math.min(1,1600/Math.max(img.width,img.height));
-  c.width=img.width*o;c.height=img.height*o;
-  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  try{localStorage.setItem(BG,c.toDataURL('image/jpeg',.8))}catch(x){alert('Fotoğraf çok büyük, daha küçük bir tane dene.')}
+  const o=Math.min(1,2560/Math.max(img.width,img.height));
+  c.width=Math.round(img.width*o);c.height=Math.round(img.height*o);
+  const g=c.getContext('2d');
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+  g.drawImage(img,0,0,c.width,c.height);
+  let ok=false;
+  for(const q of [0.95,0.9,0.85,0.8,0.7]){
+   try{localStorage.setItem(BG,c.toDataURL('image/jpeg',q));ok=true;break}catch(x){}
+  }
+  if(!ok)alert('Fotoğraf çok büyük, daha küçük bir tane dene.');
   arkaUygula();URL.revokeObjectURL(url);
  };
  img.src=url;
