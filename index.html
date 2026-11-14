@@ -5,8 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ders Sayacı</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23000'/%3E%3Crect x='14' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Crect x='96' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Ctext x='49' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E00%3C/text%3E%3Ctext x='131' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E50%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23000'/%3E%3Crect x='14' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Crect x='96' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Ctext x='49' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E00%3C/text%3E%3Ctext x='131' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E50%3C/text%3E%3C/svg%3E">
+<script>
+(function(){
+ var c=document.createElement('canvas');c.width=c.height=180;
+ var x=c.getContext('2d');
+ x.fillStyle='#000';x.fillRect(0,0,180,180);
+ x.fillStyle='#333';
+ function kutu(a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();x.fill()}
+ kutu(14,50,70,80,10);kutu(96,50,70,80,10);
+ x.fillStyle='#fff';x.font='bold 52px monospace';x.textAlign='center';
+ x.fillText('00',49,107);x.fillText('50',131,107);
+ var u=c.toDataURL('image/png');
+ ['icon','apple-touch-icon'].forEach(function(t){
+  document.querySelectorAll('link[rel="'+t+'"]').forEach(function(e){e.remove()});
+  var l=document.createElement('link');l.rel=t;l.href=u;document.head.appendChild(l);
+ });
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100vh;display:flex;flex-direction:column;background-size:cover;background-position:center;background-attachment:fixed}
@@ -155,7 +170,25 @@ function ozetCiz(){
  const el=document.getElementById('ozet');el.innerHTML='';
  if(!aktifSekme)return;
  const bugun=yerelGun(new Date()),hb=haftaBasi();
- const filtre=aktifSekme==='gun'?(k=>k.gun===bugun):(k=>k.gun>=hb);
+ if(aktifSekme==='hafta'){
+  const adlar=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+  const p=new Date(hb+'T00:00:00');
+  let toplamH=0;
+  adlar.forEach((ad,i)=>{
+   const d=new Date(p);d.setDate(p.getDate()+i);
+   const g=yerelGun(d);
+   const t=veri.kayitlar.filter(k=>k.gun===g).reduce((a,k)=>a+k.sn,0);
+   toplamH+=t;
+   const r=document.createElement('div');r.className='satir';
+   r.innerHTML='<span>'+ad+'</span><span>'+kisa(t)+'</span>';
+   el.appendChild(r);
+  });
+  const rt=document.createElement('div');rt.className='satir toplam';
+  rt.innerHTML='<span>Toplam</span><span>'+kisa(toplamH)+'</span>';
+  el.appendChild(rt);
+  return;
+ }
+ const filtre=(k=>k.gun===bugun);
  let top=0;
  Object.keys(DERSLER).forEach(d=>{
   const t=topla(d,filtre);top+=t;
