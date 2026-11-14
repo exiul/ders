@@ -3,34 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ders Sayacı</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23000'/%3E%3Crect x='14' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Crect x='96' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Ctext x='49' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E00%3C/text%3E%3Ctext x='131' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E50%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23000'/%3E%3Crect x='14' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Crect x='96' y='50' width='70' height='80' rx='10' fill='%23333'/%3E%3Ctext x='49' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E00%3C/text%3E%3Ctext x='131' y='107' font-family='monospace' font-size='52' font-weight='bold' fill='%23fff' text-anchor='middle'%3E50%3C/text%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#000;color:#eee;min-height:100vh;display:flex;flex-direction:column;background-size:cover;background-position:center;background-attachment:fixed}
 .top{display:flex;flex:1;min-height:60vh}
-.side{width:230px;background:rgba(0,0,0,.55);padding:16px;display:flex;flex-direction:column;gap:10px}
+.side{width:230px;background:rgba(28,28,30,.85);padding:16px;display:flex;flex-direction:column;gap:10px}
 .side h2{font-size:13px;color:#999;letter-spacing:1px}
 #liste{display:flex;flex-direction:column;gap:10px}
-.ders{padding:14px;border-radius:12px;cursor:pointer;border:2px solid transparent;font-weight:600;color:#fff;transition:.2s;opacity:.75}
-.ders:hover{opacity:1}
-.ders.aktif{opacity:1;border-color:#fff}
-.ders small{display:block;font-weight:400;margin-top:4px;opacity:.9}
+.ders{padding:14px;border-radius:8px;cursor:pointer;border:2px solid transparent;font-weight:600;background:#050505;transition:.2s}
+.ders:hover{background:#111}
+.ders.aktif{border-color:#555}
 .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
 #secili{font-size:22px;font-weight:600}
 #zaman{font-size:80px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:2px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
 .btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 button{padding:12px 22px;border:none;border-radius:10px;font-size:16px;cursor:pointer;color:#fff;background:rgba(255,255,255,.15)}
 button:hover{background:rgba(255,255,255,.28)}
-.alt{background:rgba(0,0,0,.6);padding:20px}
-.alt h2{font-size:16px;margin-bottom:12px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12);font-size:14px}
-.toplam td{font-weight:700}
+button.sek{background:#050505;border:2px solid #333}
+button.sek.aktif{border-color:#aaa}
+.alt{background:rgba(28,28,30,.85);padding:20px}
+.sekmeler{display:flex;gap:10px;margin-bottom:14px}
+.satir{display:flex;justify-content:space-between;padding:12px 14px;margin-bottom:8px;background:#050505;border-radius:8px;font-weight:600}
+.satir.toplam{color:#fff;border:1px solid #333}
 #tam{display:none;position:fixed;inset:0;background:#000;z-index:10;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background-size:cover;background-position:center}
 #tam .buyuk{font-size:min(22vw,200px);font-weight:200;font-variant-numeric:tabular-nums;color:#f4f4f4;text-shadow:0 2px 20px rgba(0,0,0,.8)}
 #tam .ad{font-size:24px;margin-bottom:20px;text-shadow:0 2px 10px rgba(0,0,0,.8)}
 #tam .ipucu{position:absolute;bottom:20px;color:#888;font-size:13px}
-@media(max-width:700px){.top{flex-direction:column}.side{width:100%}#liste{flex-direction:row;flex-wrap:wrap}#zaman{font-size:56px}}
+@media(max-width:700px){.top{flex-direction:column}.side{width:100%}#zaman{font-size:56px}}
 </style>
 </head>
 <body>
@@ -54,11 +57,11 @@ th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12)
  </div>
 </div>
 <div class="alt">
- <h2>Günlük ve Haftalık Durum</h2>
- <table>
-  <thead><tr><th>Ders</th><th>Bugün</th><th>Bu Hafta</th><th>Toplam</th></tr></thead>
-  <tbody id="tablo"></tbody>
- </table>
+ <div class="sekmeler">
+  <button class="sek" id="sekG" onclick="sekme('gun')">Günlük</button>
+  <button class="sek" id="sekH" onclick="sekme('hafta')">Haftalık</button>
+ </div>
+ <div id="ozet"></div>
 </div>
 <div id="tam" onclick="tamKapat()">
  <div class="ad" id="tamAd"></div>
@@ -66,10 +69,10 @@ th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12)
  <div class="ipucu">Kapatmak için ekrana dokun</div>
 </div>
 <script>
-const DERSLER={Matematik:'#d93a3a',Fizik:'#2e9e5a',Kimya:'#d4b21f',Biyoloji:'#8a4fd1'};
+const DERSLER={Matematik:'#e53935',Fizik:'#43a047',Kimya:'#fdd835',Biyoloji:'#ab47bc'};
 const KEY='dersSayacVeri',BG='dersSayacArka';
 let veri=JSON.parse(localStorage.getItem(KEY)||'{"kayitlar":[]}');
-let secili=null,calisiyor=false,baslangic=0,biriken=0,tick=null;
+let secili=null,calisiyor=false,baslangic=0,biriken=0,tick=null,aktifSekme=null;
 
 function kaydet(){localStorage.setItem(KEY,JSON.stringify(veri))}
 function yerelGun(d){const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)}
@@ -102,12 +105,11 @@ function arkaSil(){localStorage.removeItem(BG);arkaUygula()}
 
 function listeCiz(){
  const el=document.getElementById('liste');el.innerHTML='';
- const bugun=yerelGun(new Date());
  Object.keys(DERSLER).forEach(d=>{
   const div=document.createElement('div');
   div.className='ders'+(secili===d?' aktif':'');
-  div.style.background=DERSLER[d];
-  div.innerHTML=d+'<small>Bugün: '+kisa(topla(d,k=>k.gun===bugun))+'</small>';
+  div.style.color=DERSLER[d];
+  div.textContent=d;
   div.onclick=()=>sec(d);
   el.appendChild(div);
  });
@@ -115,9 +117,10 @@ function listeCiz(){
 function sec(d){
  if(calisiyor||biriken>0){alert('Önce şu anki süreyi bitirip kaydet.');return}
  secili=d;
- document.getElementById('secili').textContent=d;
- document.getElementById('tamAd').textContent=d;
- document.getElementById('tamAd').style.color=DERSLER[d];
+ const s=document.getElementById('secili');
+ s.textContent=d;s.style.color=DERSLER[d];
+ const t=document.getElementById('tamAd');
+ t.textContent=d;t.style.color=DERSLER[d];
  listeCiz();
 }
 function baslat(){
@@ -134,28 +137,37 @@ function bitir(){
  if(!secili)return;
  duraklat();
  if(biriken>=1){veri.kayitlar.push({ders:secili,gun:yerelGun(new Date()),sn:Math.floor(biriken)});kaydet()}
- biriken=0;guncelle();listeCiz();tabloCiz();
+ biriken=0;guncelle();listeCiz();ozetCiz();
 }
 function guncelle(){
  const t=sure(gecen());
  document.getElementById('zaman').textContent=t;
  document.getElementById('tamZaman').textContent=t;
 }
-function tabloCiz(){
- const tb=document.getElementById('tablo');tb.innerHTML='';
- const bugun=yerelGun(new Date()),hb=haftaBasi();
- let tb1=0,tb2=0,tb3=0;
- Object.keys(DERSLER).forEach(d=>{
-  const a=topla(d,k=>k.gun===bugun),b=topla(d,k=>k.gun>=hb),c=topla(d,()=>true);
-  tb1+=a;tb2+=b;tb3+=c;
-  const tr=document.createElement('tr');
-  tr.innerHTML='<td style="color:'+DERSLER[d]+';font-weight:600">'+d+'</td><td>'+kisa(a)+'</td><td>'+kisa(b)+'</td><td>'+kisa(c)+'</td>';
-  tb.appendChild(tr);
- });
- const tr=document.createElement('tr');tr.className='toplam';
- tr.innerHTML='<td>TOPLAM</td><td>'+kisa(tb1)+'</td><td>'+kisa(tb2)+'</td><td>'+kisa(tb3)+'</td>';
- tb.appendChild(tr);
+
+function sekme(a){
+ aktifSekme=(aktifSekme===a)?null:a;
+ ozetCiz();
 }
+function ozetCiz(){
+ document.getElementById('sekG').classList.toggle('aktif',aktifSekme==='gun');
+ document.getElementById('sekH').classList.toggle('aktif',aktifSekme==='hafta');
+ const el=document.getElementById('ozet');el.innerHTML='';
+ if(!aktifSekme)return;
+ const bugun=yerelGun(new Date()),hb=haftaBasi();
+ const filtre=aktifSekme==='gun'?(k=>k.gun===bugun):(k=>k.gun>=hb);
+ let top=0;
+ Object.keys(DERSLER).forEach(d=>{
+  const t=topla(d,filtre);top+=t;
+  const r=document.createElement('div');r.className='satir';
+  r.innerHTML='<span style="color:'+DERSLER[d]+'">'+d+'</span><span style="color:'+DERSLER[d]+'">'+kisa(t)+'</span>';
+  el.appendChild(r);
+ });
+ const r=document.createElement('div');r.className='satir toplam';
+ r.innerHTML='<span>Toplam</span><span>'+kisa(top)+'</span>';
+ el.appendChild(r);
+}
+
 function tamEkran(){
  if(!secili){alert('Önce soldan bir ders seç.');return}
  document.getElementById('tam').style.display='flex';
@@ -165,7 +177,7 @@ function tamKapat(){
  document.getElementById('tam').style.display='none';
  if(document.fullscreenElement)document.exitFullscreen();
 }
-arkaUygula();listeCiz();tabloCiz();guncelle();
+arkaUygula();listeCiz();ozetCiz();guncelle();
 </script>
 </body>
 </html>
